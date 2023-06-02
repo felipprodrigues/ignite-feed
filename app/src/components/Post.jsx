@@ -18,7 +18,6 @@ export function Post({author, publishedAt, content}) {
     addSuffix: true
   })
 
-
   function handleCreateNewComment(event) {
     event.preventDefault()
 
@@ -28,8 +27,27 @@ export function Post({author, publishedAt, content}) {
   }
 
   function handleNewCommentChange() {
+    event.target.setCustomValidity('')
     setNewCommentText(event.target.value)
   }
+
+  function deleteComment(commentToDelete) {
+    // imutabilidade => variáveis não sofrem mutação. Criamos um novo espaço na memória
+    const commentsWithoutDeletedOne = comments.filter(comment => {
+      //! percorre cada comentário
+      //! Se true, mantém
+      //! Se false, remove da lista
+      return comment !== commentToDelete //* mantém na lista apenas os comentários DIFERENTES do comentário que quero deletar
+    })
+
+    setComments(commentsWithoutDeletedOne)
+  }
+
+  function handleNewCommentInvalid() {
+    event.target.setCustomValidity('Esse campo é obrigatório')
+  }
+
+  const isNewCommentEmpty = newCommentText.length === 0
 
   return (
     <article className={styles.post}>
@@ -48,17 +66,21 @@ export function Post({author, publishedAt, content}) {
       </header>
 
       <div className={styles.content}>
-        {content.map((line => {
+        {content.map((line, index) => {
           if(line.type === 'paragraph') {
             return (
-              <p>{line.content}</p>
+              <p key={`line.content-${index + 1}`}>{line.content}</p>
             )
           } else if (line.type === "link") {
             return  (
-              <p><a href="#">{line.content}</a></p>
+              <p key={`line.content-${index + 32}`}>
+                <a href="#">
+                  {line.content}
+                </a>
+              </p>
             )
           }
-        }))}
+        })}
       </div>
       <form className={styles.commentForm} onSubmit={handleCreateNewComment}>
         <strong>Deixe seu feedback</strong>
@@ -69,16 +91,29 @@ export function Post({author, publishedAt, content}) {
           id=""
           onChange={handleNewCommentChange}
           value={newCommentText}
+          required
+          onInvalid={handleNewCommentInvalid} //sempre é chamada que o campo está vazio
         />
 
         <footer>
-          <button type='submit'>Publicar</button>
+          <button
+            type='submit'
+            disabled={isNewCommentEmpty}
+          >
+            Publicar
+          </button>
         </footer>
       </form>
 
       <div className={styles.commentList}>
         {comments.map(comment => {
-          return <Comment content={comment}/>
+          return (
+            <Comment
+              key={comment}
+              content={comment}
+              onDeleteComment={deleteComment}
+            />
+          )
         })}
       </div>
     </article>
